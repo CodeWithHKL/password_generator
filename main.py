@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from generator import generate_secure_password, generate_passphrase
 from config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
+from typing import Literal
 
 app = FastAPI(title="Enterprise Password API", version="1.3.0")
 
@@ -47,22 +48,18 @@ async def landing():
     </html>
     """
 
-@app.get("/generate", response_model=PasswordResponse)
-def get_complex(length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128)):
-    pw, entropy = generate_secure_password(length=length)
-    return {"password": pw, "length": length, "entropy_bits": entropy}
-
 @app.get("/generate_phrase", response_model=PasswordResponse)
 def get_readable(
-    words: int = Query(DEFAULT_WORD_COUNT, ge=3, le=10),
+    words: int = Query(4, ge=3, le=10),
     sep: str = Query("-", max_length=1),
-    capitalize: bool = Query(True),
-    include_digit: bool = Query(True)
+    # Added "random" to the allowed list
+    casing: Literal["lower", "title", "upper", "random"] = Query("title"),
+    digits: int = Query(1, ge=0, le=5)
 ):
     pw, entropy = generate_passphrase(
         num_words=words, 
         separator=sep, 
-        capitalize=capitalize, 
-        include_digit=include_digit
+        casing=casing, 
+        digit_count=digits
     )
     return {"password": pw, "length": len(pw), "entropy_bits": entropy}

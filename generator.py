@@ -25,25 +25,40 @@ def generate_secure_password(length=16, avoid_ambiguous=True):
     pw_str = "".join(password)
     return pw_str, calculate_entropy(len(all_chars), len(pw_str))
 
-def generate_passphrase(num_words=4, separator="-", capitalize=True, include_digit=True):
-    """
-    Generates a readable passphrase.
-    Optional 'Enterprise' complexity: Capitalization and a random digit.
-    """
+def generate_passphrase(num_words=4, separator="-", casing="title", digit_count=1):
     selected = [secrets.choice(WORD_POOL) for _ in range(num_words)]
     
-    if capitalize:
+    # New Casing Logic
+    if casing == "title":
         selected = [w.capitalize() for w in selected]
+    elif casing == "upper":
+        selected = [w.upper() for w in selected]
+    elif casing == "lower":
+        selected = [w.lower() for w in selected]
+    elif casing == "random":
+        # For each word, pick a random style
+        styles = ["lower", "title", "upper"]
+        selected = [
+            w.upper() if (s := secrets.choice(styles)) == "upper" 
+            else w.capitalize() if s == "title" 
+            else w.lower() 
+            for w in selected
+        ]
         
     pw_str = separator.join(selected)
     
-    # Base entropy from word selection
+    # Entropy calculation
+    # Base entropy from 7776 words
     entropy = calculate_entropy(len(WORD_POOL), num_words)
     
-    if include_digit:
-        digit = secrets.choice("0123456789")
-        pw_str += f"{separator}{digit}"
-        # Adding 1 of 10 digits adds log2(10) bits
-        entropy += 3.32
+    # Random casing adds entropy! 
+    # Since there are 3 choices per word, we add log2(3) per word
+    if casing == "random":
+        entropy += (num_words * math.log2(3))
+        
+    if digit_count > 0:
+        extra_digits = "".join(secrets.choice("0123456789") for _ in range(digit_count))
+        pw_str += f"{separator}{extra_digits}"
+        entropy += (digit_count * 3.32)
         
     return pw_str, round(entropy, 2)
