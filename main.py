@@ -24,35 +24,42 @@ async def landing():
                 body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f0f2f5; }
                 .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                 h1 { color: #1a73e8; }
-                .code-block { background: #202124; color: #e8eaed; padding: 15px; border-radius: 8px; font-family: monospace; }
+                .code-block { background: #202124; color: #e8eaed; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; }
                 .tag { background: #e8f0fe; color: #1967d2; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+                li { margin-bottom: 10px; }
             </style>
         </head>
         <body>
             <div class="card">
                 <h1>🔐 Enterprise Password API</h1>
-                <p>Generate high-entropy passphrases or complex character strings.</p>
+                <p>High-performance password generation with mathematically proven entropy.</p>
                 
-                <h3>Option A: Readable Passphrases <span class="tag">NEW</span></h3>
-                <p>Uses a 7,776-word Diceware list. Supports capitalization and digits for legacy compatibility.</p>
-                <div class="code-block">GET /generate_phrase?words=4&capitalize=true&include_digit=true</div>
+                <h3>1. Readable Passphrases <span class="tag">DICEWARE</span></h3>
+                <p>Customizable word-based passwords. Great for humans.</p>
+                <div class="code-block">GET /generate_phrase?words=5&casing=random&digits=2</div>
                 
-                <h3>Option B: Complex Random</h3>
-                <p>Standard alphanumeric + symbols generation.</p>
-                <div class="code-block">GET /generate?length=24</div>
+                <h3>2. Complex Strings <span class="tag">ALPHANUMERIC</span></h3>
+                <p>Random characters, numbers, and symbols. Great for service accounts.</p>
+                <div class="code-block">GET /generate?length=32</div>
                 
                 <br>
-                <a href="/docs" style="background:#1a73e8; color:white; padding:12px 24px; text-decoration:none; border-radius:6px;">Open API Documentation</a>
+                <a href="/docs" style="background:#1a73e8; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; display: inline-block;">Explore Interactive Docs</a>
             </div>
         </body>
     </html>
     """
 
+# --- ENDPOINT 1: COMPLEX CHARACTERS ---
+@app.get("/generate", response_model=PasswordResponse)
+def get_complex(length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128)):
+    pw, entropy = generate_secure_password(length=length)
+    return {"password": pw, "length": length, "entropy_bits": entropy}
+
+# --- ENDPOINT 2: READABLE PASSPHRASE ---
 @app.get("/generate_phrase", response_model=PasswordResponse)
 def get_readable(
     words: int = Query(4, ge=3, le=10),
     sep: str = Query("-", max_length=1),
-    # Added "random" to the allowed list
     casing: Literal["lower", "title", "upper", "random"] = Query("title"),
     digits: int = Query(1, ge=0, le=5)
 ):
