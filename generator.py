@@ -1,32 +1,46 @@
 # generator.py
 
 import secrets
-from config import LOWERCASE, UPPERCASE, DIGITS, SYMBOLS, AMBIGUOUS, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH
+import math
+from config import (
+    LOWERCASE, UPPERCASE, DIGITS, SYMBOLS, 
+    AMBIGUOUS, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH
+)
+
+def calculate_entropy(length: int, pool_size: int) -> float:
+    """Calculates the Shannon entropy of the password."""
+    if pool_size <= 0:
+        return 0.0
+    return round(length * math.log2(pool_size), 2)
 
 def generate_secure_password(length=16, avoid_ambiguous=True):
-    if length < MIN_PASSWORD_LENGTH:
-        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
-    if length > MAX_PASSWORD_LENGTH:
-        raise ValueError(f"Password cannot exceed {MAX_PASSWORD_LENGTH} characters")
+    if length < MIN_PASSWORD_LENGTH or length > MAX_PASSWORD_LENGTH:
+        raise ValueError(f"Password length must be between {MIN_PASSWORD_LENGTH} and {MAX_PASSWORD_LENGTH}")
 
-    lowercase = ''.join(c for c in LOWERCASE if c not in AMBIGUOUS) if avoid_ambiguous else LOWERCASE
-    uppercase = ''.join(c for c in UPPERCASE if c not in AMBIGUOUS) if avoid_ambiguous else UPPERCASE
-    digits = ''.join(c for c in DIGITS if c not in AMBIGUOUS) if avoid_ambiguous else DIGITS
-    symbols = SYMBOLS
+    # Define the pools
+    pools = [LOWERCASE, UPPERCASE, DIGITS, SYMBOLS]
+    
+    # Filter ambiguous characters if requested
+    if avoid_ambiguous:
+        pools = ["".join(c for c in p if c not in AMBIGUOUS) for p in pools]
 
-    all_chars = lowercase + uppercase + digits + symbols
+    # Ensure no pool is empty (safety check)
+    pools = [p for p in pools if p]
+    all_chars = "".join(pools)
+    
+    # 1. Guarantee at least one character from each active pool
+    password = [secrets.choice(p) for p in pools]
 
-    # Ensure at least one of each type
-    password = [
-        secrets.choice(lowercase),
-        secrets.choice(uppercase),
-        secrets.choice(digits),
-        secrets.choice(symbols)
-    ]
-
-    # Fill remaining length
-    for _ in range(length - 4):
+    # 2. Fill the rest of the length
+    for _ in range(length - len(password)):
         password.append(secrets.choice(all_chars))
 
-    secrets.SystemRandom().shuffle(password)
-    return ''.join(password)
+    # 3. Securely shuffle the result
+    # We use secrets.SystemRandom() which is cryptographically secure
+    rng = secrets.SystemRandom()
+    rng.shuffle(password)
+    
+    password_str = "".join(password)
+    entropy = calculate_entropy(len(password_str), len(all_chars))
+    
+    return password_str, entropy
