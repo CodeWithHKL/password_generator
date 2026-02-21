@@ -3,90 +3,66 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from typing import List
-from generator import generate_secure_password
-from config import DEFAULT_PASSWORD_LENGTH
+from generator import generate_secure_password, generate_passphrase
+from config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
 
-app = FastAPI(
-    title="Enterprise Secure Password API",
-    description="Generate cryptographically secure passwords with entropy calculation.",
-    version="1.1.0"
-)
+app = FastAPI(title="Enterprise Password API", version="1.3.0")
 
-# Data Models
 class PasswordResponse(BaseModel):
     password: str
     length: int
     entropy_bits: float
 
-class BatchResponse(BaseModel):
-    passwords: List[PasswordResponse]
-    count: int
-
-# --- GUI / LANDING PAGE ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def welcome_page():
+async def landing():
     return """
-    <!DOCTYPE html>
     <html>
         <head>
-            <title>Enterprise Password API</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Secure Gen API</title>
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 40px 20px; background-color: #f9fafb; color: #111827; }
-                .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-                h1 { color: #2563eb; display: flex; align-items: center; gap: 10px; }
-                code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #db2777; }
-                .btn { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 1rem; transition: background 0.2s; }
-                .btn:hover { background: #1d4ed8; }
-                .endpoint-card { border-left: 4px solid #2563eb; background: #eff6ff; padding: 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+                body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f0f2f5; }
+                .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                h1 { color: #1a73e8; }
+                .code-block { background: #202124; color: #e8eaed; padding: 15px; border-radius: 8px; font-family: monospace; }
+                .tag { background: #e8f0fe; color: #1967d2; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
             </style>
         </head>
         <body>
-            <div class="container">
+            <div class="card">
                 <h1>🔐 Enterprise Password API</h1>
-                <p>A cryptographically secure password generation service using Python's <code>secrets</code> module and Shannon entropy scoring.</p>
+                <p>Generate high-entropy passphrases or complex character strings.</p>
                 
-                <div class="endpoint-card">
-                    <strong>Single Password:</strong> <code>GET /generate?length=16</code>
-                </div>
-                <div class="endpoint-card">
-                    <strong>Batch Generation:</strong> <code>GET /generate_batch?count=10&length=20</code>
-                </div>
-
-                <p>To test the parameters and see full technical specifications, visit the interactive documentation:</p>
-                <a href="/docs" class="btn">Explore API Documentation (Swagger UI)</a>
+                <h3>Option A: Readable Passphrases <span class="tag">NEW</span></h3>
+                <p>Uses a 7,776-word Diceware list. Supports capitalization and digits for legacy compatibility.</p>
+                <div class="code-block">GET /generate_phrase?words=4&capitalize=true&include_digit=true</div>
+                
+                <h3>Option B: Complex Random</h3>
+                <p>Standard alphanumeric + symbols generation.</p>
+                <div class="code-block">GET /generate?length=24</div>
+                
+                <br>
+                <a href="/docs" style="background:#1a73e8; color:white; padding:12px 24px; text-decoration:none; border-radius:6px;">Open API Documentation</a>
             </div>
         </body>
     </html>
     """
 
-# --- API ENDPOINTS ---
+@app.get("/generate", response_model=PasswordResponse)
+def get_complex(length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128)):
+    pw, entropy = generate_secure_password(length=length)
+    return {"password": pw, "length": length, "entropy_bits": entropy}
 
-@app.get("/generate", response_model=PasswordResponse, summary="Generate a secure password")
-def get_password(
-    length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128, description="Length of the password"),
-    avoid_ambiguous: bool = Query(True, description="Exclude similar-looking characters (e.g., l, 1, O, 0)")
+@app.get("/generate_phrase", response_model=PasswordResponse)
+def get_readable(
+    words: int = Query(DEFAULT_WORD_COUNT, ge=3, le=10),
+    sep: str = Query("-", max_length=1),
+    capitalize: bool = Query(True),
+    include_digit: bool = Query(True)
 ):
-    try:
-        pw, entropy = generate_secure_password(length=length, avoid_ambiguous=avoid_ambiguous)
-        return {"password": pw, "length": length, "entropy_bits": entropy}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.get("/generate_batch", response_model=BatchResponse, summary="Generate multiple secure passwords")
-def get_password_batch(
-    count: int = Query(5, ge=1, le=100, description="Number of passwords to generate"),
-    length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128),
-    avoid_ambiguous: bool = True
-):
-    results = []
-    for _ in range(count):
-        pw, entropy = generate_secure_password(length=length, avoid_ambiguous=avoid_ambiguous)
-        results.append({"password": pw, "length": length, "entropy_bits": entropy})
-    
-    return {"passwords": results, "count": count}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    pw, entropy = generate_passphrase(
+        num_words=words, 
+        separator=sep, 
+        capitalize=capitalize, 
+        include_digit=include_digit
+    )
+    return {"password": pw, "length": len(pw), "entropy_bits": entropy}

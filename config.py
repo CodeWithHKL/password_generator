@@ -10,3 +10,8 @@ DIGITS = "0123456789"
 SYMBOLS = "!@#$%^&*()-_=+[]{}|;:,.<>?/"
 
 AMBIGUOUS = "O0l1I"
+
+# New Passphrase Settings
+DEFAULT_WORD_COUNT = 4
+MIN_WORD_COUNT = 3
+MAX_WORD_COUNT = 10
