@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from generator import generate_secure_password, generate_passphrase
 from config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
-from typing import Literal
+from typing import Literal, List, Union
 
 app = FastAPI(title="Enterprise Password API", version="1.3.0")
 
@@ -50,23 +50,35 @@ async def landing():
     """
 
 # --- ENDPOINT 1: COMPLEX CHARACTERS ---
-@app.get("/generate", response_model=PasswordResponse)
-def get_complex(length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128)):
-    pw, entropy = generate_secure_password(length=length)
-    return {"password": pw, "length": length, "entropy_bits": entropy}
+@app.get("/generate", response_model=Union[PasswordResponse, List[PasswordResponse]])
+def get_complex(
+    length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128),
+    count: int = Query(1, ge=1, le=50) # Allow up to 50 at once
+):
+    results = []
+    for _ in range(count):
+        pw, entropy = generate_secure_password(length=length)
+        results.append({"password": pw, "length": length, "entropy_bits": entropy})
+    
+    return results[0] if count == 1 else results
 
 # --- ENDPOINT 2: READABLE PASSPHRASE ---
-@app.get("/generate_phrase", response_model=PasswordResponse)
+@app.get("/generate_phrase", response_model=Union[PasswordResponse, List[PasswordResponse]])
 def get_readable(
     words: int = Query(4, ge=3, le=10),
     sep: str = Query("-", max_length=1),
     casing: Literal["lower", "title", "upper", "random"] = Query("title"),
-    digits: int = Query(1, ge=0, le=5)
+    digits: int = Query(1, ge=0, le=5),
+    count: int = Query(1, ge=1, le=50) # Allow up to 50 at once
 ):
-    pw, entropy = generate_passphrase(
-        num_words=words, 
-        separator=sep, 
-        casing=casing, 
-        digit_count=digits
-    )
-    return {"password": pw, "length": len(pw), "entropy_bits": entropy}
+    results = []
+    for _ in range(count):
+        pw, entropy = generate_passphrase(
+            num_words=words, 
+            separator=sep, 
+            casing=casing, 
+            digit_count=digits
+        )
+        results.append({"password": pw, "length": len(pw), "entropy_bits": entropy})
+        
+    return results[0] if count == 1 else results
