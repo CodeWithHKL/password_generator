@@ -9,7 +9,7 @@ from config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
 import config
 from typing import Literal, List, Union
 
-app = FastAPI(title="Enterprise Password API", version="1.3.0")
+app = FastAPI(title="HKLX Password API", version="1.0")
 
 # --- AUTHENTICATION ---
 api_key_header = APIKeyHeader(name=config.API_KEY_NAME, auto_error=False)
@@ -35,7 +35,7 @@ async def landing():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Secure Gen API | Terminal</title>
+        <title>HKLX Password Generator API</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
@@ -69,7 +69,7 @@ async def landing():
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#ff6b00]/10 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div class="fixed top-8 right-8 z-50">
-            <a href="https://your-portfolio-link.com" target="_blank" rel="noopener noreferrer" 
+            <a href="https:hklxportfolio.vercel.app" target="_blank" rel="noopener noreferrer" 
                class="w-12 h-12 bg-[#ff6b00] rounded-xl flex items-center justify-center font-black text-black text-xl hover:bg-orange-500 hover:rotate-12 transition-all duration-300 shadow-lg shadow-orange-600/20">
                 H
             </a>
@@ -84,9 +84,9 @@ async def landing():
                 </div>
                 <div>
                     <h1 class="text-4xl font-black uppercase tracking-tighter leading-none">
-                        Secure Gen <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff6b00] to-orange-400">API</span>
+                        Password Gen <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff6b00] to-orange-400">API</span>
                     </h1>
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-[0.2em] mt-2">Enterprise Entropy Systems v1.3.0</p>
+                    <p class="text-gray-500 text-xs font-bold uppercase tracking-[0.2em] mt-2">Secure Entropy Systems v1.0</p>
                 </div>
             </div>
 
