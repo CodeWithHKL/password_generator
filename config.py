@@ -1,4 +1,8 @@
 # config.py
+import os
+
+API_KEY = os.getenv("API_KEY", "123")  # Vercel will override this
+API_KEY_NAME = "X-API-Key"
 
 MIN_PASSWORD_LENGTH = 8
 DEFAULT_PASSWORD_LENGTH = 16
