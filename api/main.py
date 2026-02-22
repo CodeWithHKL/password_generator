@@ -4,9 +4,9 @@ from fastapi import FastAPI, HTTPException, Query, Security, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
-from generator import generate_secure_password, generate_passphrase
-from config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
-import config
+from .generator import generate_secure_password, generate_passphrase
+from .config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
+from . import config
 from typing import Literal, List, Union
 
 app = FastAPI(title="HKLX Password API", version="1.0")

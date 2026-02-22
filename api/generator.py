@@ -2,11 +2,11 @@
 
 import secrets
 import math
-from config import (
+from .config import (
     LOWERCASE, UPPERCASE, DIGITS, SYMBOLS, 
     AMBIGUOUS, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH
 )
-from wordlist import WORD_POOL
+from .wordlist import WORD_POOL
 
 def calculate_entropy(pool_size: int, length: int) -> float:
     if pool_size <= 0: return 0.0
