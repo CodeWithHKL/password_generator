@@ -69,7 +69,7 @@ async def landing():
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#ff6b00]/10 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div class="fixed top-8 right-8 z-50">
-            <a href="https:hklxportfolio.vercel.app" target="_blank" rel="noopener noreferrer" 
+            <a href="https://hklxportfolio.vercel.app" target="_blank" rel="noopener noreferrer" 
                class="w-12 h-12 bg-[#ff6b00] rounded-xl flex items-center justify-center font-black text-black text-xl hover:bg-orange-500 hover:rotate-12 transition-all duration-300 shadow-lg shadow-orange-600/20">
                 H
             </a>
