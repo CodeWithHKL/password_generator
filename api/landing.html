@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Generator API</title>
+<meta name="description" content="A small HTTP API that returns random passwords and passphrases, generated with Python's secrets module.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #666666;
+    --line: #e4e4e4;
+    --code-bg: #f6f6f6;
+    --accent: #c2410c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --fg: #e8e8e8;
+      --muted: #9a9a9a;
+      --line: #2a2a2a;
+      --code-bg: #1b1b1b;
+      --accent: #fb923c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-size: 1.75rem; margin: 0 0 8px; }
+  h2 { font-size: 1.15rem; margin: 40px 0 8px; padding-top: 24px; border-top: 1px solid var(--line); }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); }
+  a { color: var(--accent); }
+  code, pre { font: 0.875rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 8px 0 12px;
+    overflow-x: auto;
+  }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 8px 0 12px; }
+  th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Password Generator API</h1>
+  <p class="lead">A small HTTP API that returns random passwords and passphrases. Everything is generated server-side with Python's <code>secrets</code> module, and nothing is stored or logged by the app.</p>
+
+  <h2>Authentication</h2>
+  <p>Every generator request needs an <code>X-API-Key</code> header. Requests without a valid key get a <code>403</code>.</p>
+
+  <h2>GET /generate</h2>
+  <p>Random character passwords. Each one contains at least one lowercase letter, uppercase letter, digit and symbol, and avoids look-alike characters (<code>O 0 l 1 I</code>).</p>
+  <div class="scroll"><table>
+    <tr><th>Parameter</th><th>Default</th><th>Range</th></tr>
+    <tr><td><code>length</code></td><td>16</td><td>8&ndash;128</td></tr>
+    <tr><td><code>count</code></td><td>1</td><td>1&ndash;50</td></tr>
+    <tr><td><code>lower</code>, <code>upper</code>, <code>digits</code>, <code>symbols</code></td><td>true</td><td>true / false</td></tr>
+    <tr><td><code>avoid_ambiguous</code></td><td>true</td><td>true / false</td></tr>
+    <tr><td><code>exclude</code></td><td>none</td><td>up to 64 characters to leave out</td></tr>
+  </table></div>
+<pre><code>curl -H "X-API-Key: YOUR_KEY" \
+  "https://YOUR_DEPLOYMENT/generate?length=20"
+
+{
+  "password": "k7Qm2vX9pRw4tZs8NeBd",
+  "length": 20,
+  "entropy_bits": 124.7
+}</code></pre>
+
+  <h2>GET /generate_phrase</h2>
+  <p>Passphrases made of random dictionary words, optionally followed by digits.</p>
+  <div class="scroll"><table>
+    <tr><th>Parameter</th><th>Default</th><th>Range</th></tr>
+    <tr><td><code>words</code></td><td>4</td><td>3&ndash;10</td></tr>
+    <tr><td><code>sep</code></td><td><code>-</code></td><td>one character</td></tr>
+    <tr><td><code>casing</code></td><td><code>title</code></td><td><code>lower</code>, <code>title</code>, <code>upper</code>, <code>random</code></td></tr>
+    <tr><td><code>digits</code></td><td>1</td><td>0&ndash;5</td></tr>
+    <tr><td><code>count</code></td><td>1</td><td>1&ndash;50</td></tr>
+  </table></div>
+<pre><code>curl -H "X-API-Key: YOUR_KEY" \
+  "https://YOUR_DEPLOYMENT/generate_phrase?words=4"
+
+{
+  "password": "Anchor-Velvet-Mosaic-Tundra-7",
+  "length": 29,
+  "entropy_bits": 54.9
+}</code></pre>
+
+  <p>With <code>count</code> above 1, both endpoints return a JSON array of these objects. <code>entropy_bits</code> is an estimate of how hard the result is to guess.</p>
+
+  <h2>More</h2>
+  <p>Interactive reference: <a href="/docs">/docs</a> (OpenAPI). Source: <a href="https://github.com/CodeWithHKL/password_generator">github.com/CodeWithHKL/password_generator</a>.</p>
+
+  <footer>Don't send generated passwords through channels you wouldn't trust with the password itself.</footer>
+</main>
+</body>
+</html>
