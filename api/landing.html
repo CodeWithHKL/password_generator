@@ -64,7 +64,7 @@
   <p>Every generator request needs an <code>X-API-Key</code> header. Requests without a valid key get a <code>403</code>.</p>
 
   <h2>GET /generate</h2>
-  <p>Random character passwords. Each one contains at least one lowercase letter, uppercase letter, digit and symbol, and avoids look-alike characters (<code>O 0 l 1 I</code>).</p>
+  <p>Random character passwords. Every enabled character set is guaranteed to appear at least once. Look-alike characters (<code>O 0 l 1 I</code>) are left out by default.</p>
   <div class="scroll"><table>
     <tr><th>Parameter</th><th>Default</th><th>Range</th></tr>
     <tr><td><code>length</code></td><td>16</td><td>8&ndash;128</td></tr>
@@ -73,14 +73,23 @@
     <tr><td><code>avoid_ambiguous</code></td><td>true</td><td>true / false</td></tr>
     <tr><td><code>exclude</code></td><td>none</td><td>up to 64 characters to leave out</td></tr>
   </table></div>
+  <p>At least one character set must remain available, otherwise the API returns <code>422</code>.</p>
 <pre><code>curl -H "X-API-Key: YOUR_KEY" \
-  "https://YOUR_DEPLOYMENT/generate?length=20"
+  "https://YOUR_DEPLOYMENT/generate?length=20&amp;symbols=false"
 
 {
   "password": "k7Qm2vX9pRw4tZs8NeBd",
   "length": 20,
   "entropy_bits": 124.7
 }</code></pre>
+
+  <h2>GET /generate_pin</h2>
+  <p>Numeric PINs.</p>
+  <div class="scroll"><table>
+    <tr><th>Parameter</th><th>Default</th><th>Range</th></tr>
+    <tr><td><code>length</code></td><td>6</td><td>4&ndash;12</td></tr>
+    <tr><td><code>count</code></td><td>1</td><td>1&ndash;50</td></tr>
+  </table></div>
 
   <h2>GET /generate_phrase</h2>
   <p>Passphrases made of random dictionary words, optionally followed by digits.</p>
@@ -101,7 +110,7 @@
   "entropy_bits": 54.9
 }</code></pre>
 
-  <p>With <code>count</code> above 1, both endpoints return a JSON array of these objects. <code>entropy_bits</code> is an estimate of how hard the result is to guess.</p>
+  <p>With <code>count</code> above 1, all endpoints return a JSON array of these objects. <code>entropy_bits</code> is an estimate of how hard the result is to guess.</p>
 
   <h2>More</h2>
   <p>Interactive reference: <a href="/docs">/docs</a> (OpenAPI). Source: <a href="https://github.com/CodeWithHKL/password_generator">github.com/CodeWithHKL/password_generator</a>.</p>

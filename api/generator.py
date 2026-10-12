@@ -12,18 +12,28 @@ def calculate_entropy(pool_size: int, length: int) -> float:
     if pool_size <= 0: return 0.0
     return round(length * math.log2(pool_size), 2)
 
-def generate_secure_password(length=16, avoid_ambiguous=True):
-    # (Existing character-based logic remains the same)
-    pools = [LOWERCASE, UPPERCASE, DIGITS, SYMBOLS]
-    if avoid_ambiguous:
-        pools = ["".join(c for c in p if c not in AMBIGUOUS) for p in pools]
+def generate_secure_password(length=16, avoid_ambiguous=True, lower=True, upper=True,
+                             digits=True, symbols=True, exclude=""):
+    pools = [p for p, enabled in (
+        (LOWERCASE, lower), (UPPERCASE, upper), (DIGITS, digits), (SYMBOLS, symbols)
+    ) if enabled]
+    removed = set(exclude) | (set(AMBIGUOUS) if avoid_ambiguous else set())
+    pools = ["".join(c for c in p if c not in removed) for p in pools]
     pools = [p for p in pools if p]
+    if not pools:
+        raise ValueError("No characters left to choose from; enable a character set or shorten 'exclude'.")
+    if length < len(pools):
+        raise ValueError("Length is too short for the selected character sets.")
     all_chars = "".join(pools)
     password = [secrets.choice(p) for p in pools]
     password += [secrets.choice(all_chars) for _ in range(length - len(password))]
     secrets.SystemRandom().shuffle(password)
     pw_str = "".join(password)
     return pw_str, calculate_entropy(len(all_chars), len(pw_str))
+
+def generate_pin(length=6):
+    pin = "".join(secrets.choice(DIGITS) for _ in range(length))
+    return pin, calculate_entropy(len(DIGITS), length)
 
 def generate_passphrase(num_words=4, separator="-", casing="title", digit_count=1):
     selected = [secrets.choice(WORD_POOL) for _ in range(num_words)]

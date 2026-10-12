@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Query, Security, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
-from .generator import generate_secure_password, generate_passphrase
+from .generator import generate_secure_password, generate_passphrase, generate_pin
 from .config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
 from . import config
 import secrets
@@ -50,13 +50,39 @@ async def landing():
          dependencies=[Depends(get_api_key)])
 def get_complex(
     length: int = Query(DEFAULT_PASSWORD_LENGTH, ge=8, le=128),
-    count: int = Query(1, ge=1, le=50) # Allow up to 50 at once
+    count: int = Query(1, ge=1, le=50), # Allow up to 50 at once
+    lower: bool = True,
+    upper: bool = True,
+    digits: bool = True,
+    symbols: bool = True,
+    avoid_ambiguous: bool = True,
+    exclude: str = Query("", max_length=64)
 ):
     results = []
     for _ in range(count):
-        pw, entropy = generate_secure_password(length=length)
+        try:
+            pw, entropy = generate_secure_password(
+                length=length, avoid_ambiguous=avoid_ambiguous, lower=lower,
+                upper=upper, digits=digits, symbols=symbols, exclude=exclude
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
         results.append({"password": pw, "length": length, "entropy_bits": entropy})
     
+    return results[0] if count == 1 else results
+
+# --- ENDPOINT 3: NUMERIC PIN ---
+@app.get("/generate_pin",
+         response_model=Union[PasswordResponse, List[PasswordResponse]],
+         dependencies=[Depends(get_api_key)])
+def get_pin(
+    length: int = Query(6, ge=4, le=12),
+    count: int = Query(1, ge=1, le=50)
+):
+    results = []
+    for _ in range(count):
+        pin, entropy = generate_pin(length)
+        results.append({"password": pin, "length": length, "entropy_bits": entropy})
     return results[0] if count == 1 else results
 
 # --- ENDPOINT 2: READABLE PASSPHRASE ---
