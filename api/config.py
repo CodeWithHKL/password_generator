@@ -1,7 +1,7 @@
 # config.py
 import os
 
-API_KEY = os.getenv("API_KEY", "123")  # Vercel will override this
+API_KEY = os.getenv("API_KEY")  # Set in Vercel project settings; if unset, all requests are rejected
 API_KEY_NAME = "X-API-Key"
 
 MIN_PASSWORD_LENGTH = 8

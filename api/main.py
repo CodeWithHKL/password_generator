@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .generator import generate_secure_password, generate_passphrase
 from .config import DEFAULT_PASSWORD_LENGTH, DEFAULT_WORD_COUNT
 from . import config
+import secrets
 from pathlib import Path
 from typing import Literal, List, Union
 
@@ -14,11 +15,20 @@ LANDING_HTML = (Path(__file__).parent / "landing.html").read_text(encoding="utf-
 
 app = FastAPI(title="HKLX Password API", version="1.0")
 
+@app.middleware("http")
+async def no_store(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/generate"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
 # --- AUTHENTICATION ---
 api_key_header = APIKeyHeader(name=config.API_KEY_NAME, auto_error=False)
 
 async def get_api_key(header_value: str = Security(api_key_header)):
-    if header_value == config.API_KEY:
+    if config.API_KEY and header_value and secrets.compare_digest(
+        header_value.encode(), config.API_KEY.encode()
+    ):
         return header_value
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
