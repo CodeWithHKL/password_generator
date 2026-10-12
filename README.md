@@ -60,6 +60,8 @@ Numeric PINs.
 curl -H "X-API-Key: YOUR_KEY" "https://YOUR_DEPLOYMENT/generate?length=20&symbols=false"
 ```
 
+On Windows PowerShell, type `curl.exe` instead of `curl`, because `curl` is an alias for `Invoke-WebRequest` there.
+
 ## Run locally
 
 From the project root. The code uses relative imports, so run it as the `api` package:
